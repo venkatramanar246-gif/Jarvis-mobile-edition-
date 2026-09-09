@@ -816,8 +816,15 @@ function showToast(text) {
 
 }
 function getErrorMessage(error) {
-    return "Boss, AI connection లో సమస్య వచ్చింది.";
+  if (error.message.includes('API')) {
+    return "API కనెక్షన్ లో సమస్య ఉంది.";
+  } else if (error.message.includes('Network')) {
+    return "నెట్‌వర్క్ కనెక్షన్ విఫలమైంది.";
+  } else {
+    return "ఏదో పొరపాటు జరిగింది, దయచేసి మళ్ళీ ప్రయత్నించండి.";
+  }
 }
+
 
 /* =========================
    ONLINE / OFFLINE
