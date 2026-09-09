@@ -920,3 +920,11 @@ window.addEventListener(
 
   }
 );
+userInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        const text = userInput.value.trim();
+        if (text.toLowerCase() === 'hello jarvis') {
+            sendMessage();
+        }
+    }
+})
