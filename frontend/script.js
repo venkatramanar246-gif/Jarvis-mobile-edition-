@@ -1,235 +1,155 @@
-
-
-/* ============================================================
-   J.A.R.V.I.S. CONFIGURATION
-   
-   ============================================================ */
+/* =========================================================
+   script.js — J.A.R.V.I.S. BUTTON + AI CONTROL SYSTEM
+   ========================================================= */
 
 const CONFIG = {
-  GEMINI_API_KEY: "AQ.Ab8RN6K7VsbckQKK3IsH-FgZzlqu-Tf9T3IaXjk0n1wY4gPpKg",
-
+  GEMINI_API_KEY: "AQ.Ab8RN6LGXSDFszMkxd4iGtkW4HcnhogOZ822jUP2a90EAH_MaQ",
   GEMINI_MODEL: "gemini-2.5-flash",
 
   SYSTEM_PROMPT: `
-You are J.A.R.V.I.S., a highly capable personal AI assistant.
-
-Address the user naturally and respectfully. You may call the user "Boss"
-when appropriate.
-
-Give accurate, useful and concise answers.
-
-You are operating inside a mobile J.A.R.V.I.S. interface.
-Do not describe the interface unless asked.
-
-Never claim that you performed a real device action unless the browser
-actually provides the required capability.
-
-When voice mode is active, keep spoken responses natural and reasonably concise.
+You are J.A.R.V.I.S., a personal AI assistant.
+Call the user Boss when appropriate.
+Give useful, accurate and concise answers.
 `
 };
 
 
-/* ============================================================
+/* =========================
    ELEMENTS
-   ============================================================ */
+   ========================= */
 
-const $ = id => document.getElementById(id);
+const coreButton = document.getElementById("coreButton");
+const jarvisCore = document.getElementById("jarvisCore");
 
-const core = $("jarvisCore");
-const coreButton = $("coreButton");
-const userInput = $("userInput");
-const sendButton = $("sendButton");
-const micButton = $("micButton");
-const speakButton = $("speakButton");
+const micButton = document.getElementById("micButton");
+const sendButton = document.getElementById("sendButton");
+const speakButton = document.getElementById("speakButton");
 
-const messages = $("messages");
+const userInput = document.getElementById("userInput");
+const messages = document.getElementById("messages");
 
-const voiceOverlay = $("voiceOverlay");
-const voiceText = $("voiceText");
-const stopVoice = $("stopVoice");
+const voiceOverlay = document.getElementById("voiceOverlay");
+const voiceText = document.getElementById("voiceText");
+const stopVoice = document.getElementById("stopVoice");
 
-const toast = $("toast");
-const systemTitle = $("systemTitle");
-const systemSubtitle = $("systemSubtitle");
+const systemTitle = document.getElementById("systemTitle");
+const systemSubtitle = document.getElementById("systemSubtitle");
+
+const toast = document.getElementById("toast");
 
 
-/* ============================================================
+/* =========================
    STATE
-   ============================================================ */
+   ========================= */
 
 let conversation = [];
-
 let lastAIResponse = "";
-
 let isProcessing = false;
-
+let isListening = false;
 let recognition = null;
 
-let listening = false;
 
-let speechEnabled = true;
-
-
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
+/* =========================
+   STARTUP
+   ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  initializeSpeechRecognition();
-
-  systemBootAnimation();
+  initializeVoice();
 
   userInput.focus();
 
 });
 
 
-/* ============================================================
-   SYSTEM BOOT
-   ============================================================ */
+/* =========================
+   CORE BUTTON
+   ========================= */
 
-function systemBootAnimation() {
+if (coreButton) {
 
-  systemTitle.textContent = "INITIALIZING";
+  coreButton.addEventListener("click", () => {
 
-  systemSubtitle.textContent = "J.A.R.V.I.S. core systems starting...";
+    coreButton.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(.82)" },
+        { transform: "scale(1.12)" },
+        { transform: "scale(1)" }
+      ],
+      {
+        duration: 500,
+        easing: "ease-out"
+      }
+    );
 
-  document.body.classList.add("processing");
+    jarvisCore.classList.add("processing");
 
-  setTimeout(() => {
-
-    systemTitle.textContent = "SYSTEMS ONLINE";
-
+    systemTitle.textContent = "J.A.R.V.I.S. ACTIVE";
     systemSubtitle.textContent =
-      "All J.A.R.V.I.S. systems are operational.";
+      "Awaiting your command, Boss.";
 
-    document.body.classList.remove("processing");
+    setTimeout(() => {
 
-  }, 1300);
+      if (!isProcessing && !isListening) {
 
-}
+        jarvisCore.classList.remove("processing");
 
+        systemTitle.textContent = "SYSTEMS ONLINE";
 
-/* ============================================================
-   UI HELPERS
-   ============================================================ */
+        systemSubtitle.textContent =
+          "All J.A.R.V.I.S. systems are operational.";
 
-function escapeHTML(text) {
+      }
 
-  const div = document.createElement("div");
+    }, 1800);
 
-  div.textContent = text;
-
-  return div.innerHTML;
-
-}
-
-
-function scrollMessages() {
-
-  requestAnimationFrame(() => {
-
-    messages.scrollTop = messages.scrollHeight;
+    userInput.focus();
 
   });
 
 }
 
 
-function showToast(text) {
+/* =========================
+   SEND BUTTON
+   ========================= */
 
-  toast.textContent = text;
+if (sendButton) {
 
-  toast.classList.add("show");
+  sendButton.addEventListener("click", () => {
 
-  clearTimeout(showToast.timer);
+    sendMessage();
 
-  showToast.timer = setTimeout(() => {
-
-    toast.classList.remove("show");
-
-  }, 2200);
+  });
 
 }
 
 
-function setProcessing(state) {
+/* =========================
+   ENTER BUTTON
+   ========================= */
 
-  isProcessing = state;
+if (userInput) {
 
-  core.classList.toggle("processing", state);
+  userInput.addEventListener("keydown", event => {
 
-  if (state) {
+    if (event.key === "Enter") {
 
-    systemTitle.textContent = "PROCESSING";
+      event.preventDefault();
 
-    systemSubtitle.textContent =
-      "J.A.R.V.I.S. is processing your request...";
+      sendMessage();
 
-  } else {
+    }
 
-    systemTitle.textContent = "SYSTEMS ONLINE";
-
-    systemSubtitle.textContent =
-      "All J.A.R.V.I.S. systems are operational.";
-
-  }
+  });
 
 }
 
 
-function addMessage(type, text) {
-
-  const message = document.createElement("div");
-
-  message.className =
-    `message ${type === "user" ? "user-message" : "jarvis-message"}`;
-
-  const label =
-    type === "user" ? "YOU" : "J.A.R.V.I.S.";
-
-  message.innerHTML = `
-    <span class="message-label">${label}</span>
-    <p>${escapeHTML(text).replace(/\n/g, "<br>")}</p>
-  `;
-
-  messages.appendChild(message);
-
-  scrollMessages();
-
-  return message;
-
-}
-
-
-function addTypingMessage() {
-
-  const message = document.createElement("div");
-
-  message.className = "message jarvis-message";
-
-  message.innerHTML = `
-    <span class="message-label">J.A.R.V.I.S.</span>
-    <p class="typing">
-      <span></span>
-      <span></span>
-      <span></span>
-    </p>
-  `;
-
-  messages.appendChild(message);
-
-  scrollMessages();
-
-  return message;
-
-}
-
-
-/* ============================================================
+/* =========================
    SEND MESSAGE
-   ============================================================ */
+   ========================= */
 
 async function sendMessage() {
 
@@ -237,7 +157,13 @@ async function sendMessage() {
 
   const text = userInput.value.trim();
 
-  if (!text) return;
+  if (!text) {
+
+    showToast("Enter a command");
+
+    return;
+
+  }
 
   userInput.value = "";
 
@@ -247,49 +173,46 @@ async function sendMessage() {
     role: "user",
     parts: [
       {
-        text
+        text: text
       }
     ]
   });
 
-  const typing = addTypingMessage();
+  const typing = addTyping();
 
   setProcessing(true);
 
   try {
 
-    const response = await askGemini();
+    const answer = await askGemini();
 
     typing.remove();
 
-    addMessage("jarvis", response);
+    addMessage("jarvis", answer);
 
     conversation.push({
       role: "model",
       parts: [
         {
-          text: response
+          text: answer
         }
       ]
     });
 
-    lastAIResponse = response;
+    lastAIResponse = answer;
 
-    if (speechEnabled) {
-
-      speak(response);
-
-    }
+    speak(answer);
 
   } catch (error) {
 
     typing.remove();
 
-    const message = getReadableError(error);
+    console.error(error);
 
-    addMessage("jarvis", message);
-
-    showToast("AI connection error");
+    addMessage(
+      "jarvis",
+      getErrorMessage(error)
+    );
 
   } finally {
 
@@ -300,41 +223,27 @@ async function sendMessage() {
 }
 
 
-/* ============================================================
-   GEMINI API
-   ============================================================ */
+/* =========================
+   GEMINI
+   ========================= */
 
 async function askGemini() {
 
-  const apiKey = CONFIG.GEMINI_API_KEY.trim();
+  const key = CONFIG.GEMINI_API_KEY.trim();
 
   if (
-    !apiKey ||
-    apiKey === "PASTE_YOUR_GEMINI_API_KEY_HERE"
+    !key ||
+    key === "PASTE_YOUR_GEMINI_API_KEY_HERE"
   ) {
 
-    throw new Error(
-      "Gemini API key is not configured. Paste your API key in CONFIG.GEMINI_API_KEY."
-    );
+    throw new Error("API_KEY_MISSING");
 
   }
 
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(CONFIG.GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
 
-  const contents = [
-    {
-      role: "user",
-      parts: [
-        {
-          text: CONFIG.SYSTEM_PROMPT
-        }
-      ]
-    },
-    ...conversation
-  ];
-
-  const response = await fetch(endpoint, {
+  const response = await fetch(url, {
 
     method: "POST",
 
@@ -343,36 +252,37 @@ async function askGemini() {
     },
 
     body: JSON.stringify({
-      contents,
+
+      systemInstruction: {
+        parts: [
+          {
+            text: CONFIG.SYSTEM_PROMPT
+          }
+        ]
+      },
+
+      contents: conversation,
 
       generationConfig: {
         temperature: 0.7,
         topP: 0.9,
         maxOutputTokens: 1200
       }
+
     })
 
   });
 
-  let data = null;
-
-  try {
-
-    data = await response.json();
-
-  } catch {
-
-    throw new Error("Invalid response from Gemini.");
-
-  }
+  const data = await response.json();
 
   if (!response.ok) {
 
-    const apiMessage =
-      data?.error?.message ||
-      `Gemini request failed with HTTP ${response.status}.`;
+    console.error("Gemini:", data);
 
-    throw new Error(apiMessage);
+    throw new Error(
+      data?.error?.message ||
+      `HTTP ${response.status}`
+    );
 
   }
 
@@ -384,7 +294,7 @@ async function askGemini() {
 
   if (!answer) {
 
-    throw new Error("Gemini returned an empty response.");
+    throw new Error("EMPTY_RESPONSE");
 
   }
 
@@ -393,194 +303,114 @@ async function askGemini() {
 }
 
 
-/* ============================================================
-   ERROR HANDLING
-   ============================================================ */
+/* =========================
+   MESSAGE UI
+   ========================= */
 
-function getReadableError(error) {
+function addMessage(type, text) {
 
-  const text = String(error?.message || error);
+  const element =
+    document.createElement("div");
 
-  if (
-    text.toLowerCase().includes("api key") ||
-    text.toLowerCase().includes("api_key")
-  ) {
+  element.className =
+    type === "user"
+      ? "message user-message"
+      : "message jarvis-message";
 
-    return "Boss, the Gemini API key has not been configured yet.";
+  element.innerHTML = `
 
-  }
+    <span class="message-label">
+      ${type === "user" ? "YOU" : "J.A.R.V.I.S."}
+    </span>
 
-  if (
-    text.toLowerCase().includes("quota") ||
-    text.toLowerCase().includes("429")
-  ) {
+    <p>${escapeHTML(text)
+      .replace(/\n/g, "<br>")}</p>
 
-    return "Boss, the Gemini API quota appears to be unavailable right now.";
+  `;
 
-  }
+  messages.appendChild(element);
 
-  if (
-    text.toLowerCase().includes("permission") ||
-    text.toLowerCase().includes("403")
-  ) {
+  scrollMessages();
 
-    return "Boss, Gemini rejected the API request. Please check the API key and API access.";
-
-  }
-
-  if (text.toLowerCase().includes("failed to fetch")) {
-
-    return "Boss, I could not reach the Gemini service. Check your internet connection.";
-
-  }
-
-  return `Boss, I encountered an error: ${text}`;
+  return element;
 
 }
 
 
-/* ============================================================
-   BUTTON EVENTS
-   ============================================================ */
+/* =========================
+   TYPING
+   ========================= */
 
-sendButton.addEventListener("click", sendMessage);
+function addTyping() {
+
+  const element =
+    document.createElement("div");
+
+  element.className =
+    "message jarvis-message";
+
+  element.innerHTML = `
+
+    <span class="message-label">
+      J.A.R.V.I.S.
+    </span>
+
+    <p class="typing">
+      <span></span>
+      <span></span>
+      <span></span>
+    </p>
+
+  `;
+
+  messages.appendChild(element);
+
+  scrollMessages();
+
+  return element;
+
+}
 
 
-userInput.addEventListener("keydown", event => {
+/* =========================
+   PROCESSING
+   ========================= */
 
-  if (event.key === "Enter") {
+function setProcessing(value) {
 
-    event.preventDefault();
+  isProcessing = value;
 
-    sendMessage();
-
-  }
-
-});
-
-
-coreButton.addEventListener("click", () => {
-
-  coreButton.animate(
-    [
-      {
-        transform: "scale(1)"
-      },
-      {
-        transform: "scale(.86)"
-      },
-      {
-        transform: "scale(1.08)"
-      },
-      {
-        transform: "scale(1)"
-      }
-    ],
-    {
-      duration: 450,
-      easing: "ease-out"
-    }
+  jarvisCore.classList.toggle(
+    "processing",
+    value
   );
 
-  userInput.focus();
+  if (value) {
 
-});
+    systemTitle.textContent =
+      "PROCESSING";
 
+    systemSubtitle.textContent =
+      "J.A.R.V.I.S. is processing...";
 
-speakButton.addEventListener("click", () => {
+  } else {
 
-  if (!lastAIResponse) {
+    systemTitle.textContent =
+      "SYSTEMS ONLINE";
 
-    showToast("No J.A.R.V.I.S. response to speak");
-
-    return;
-
-  }
-
-  speechEnabled = true;
-
-  speak(lastAIResponse);
-
-});
-
-
-/* ============================================================
-   SPEECH OUTPUT
-   ============================================================ */
-
-function speak(text) {
-
-  if (!("speechSynthesis" in window)) {
-
-    showToast("Voice output is not supported");
-
-    return;
+    systemSubtitle.textContent =
+      "All J.A.R.V.I.S. systems are operational.";
 
   }
-
-  window.speechSynthesis.cancel();
-
-  const cleanText = text
-    .replace(/[*#_`]/g, "")
-    .replace(/\[(.*?)\]\((.*?)\)/g, "$1");
-
-  const utterance =
-    new SpeechSynthesisUtterance(cleanText);
-
-  utterance.lang = "en-US";
-
-  utterance.rate = 0.94;
-
-  utterance.pitch = 0.86;
-
-  utterance.volume = 1;
-
-  const voices =
-    window.speechSynthesis.getVoices();
-
-  const preferredVoice =
-    voices.find(v =>
-      /Google US English/i.test(v.name)
-    ) ||
-    voices.find(v =>
-      /Microsoft.*English/i.test(v.name)
-    ) ||
-    voices.find(v =>
-      /^en-US/i.test(v.lang)
-    );
-
-  if (preferredVoice) {
-
-    utterance.voice = preferredVoice;
-
-  }
-
-  utterance.onstart = () => {
-
-    core.classList.add("processing");
-
-  };
-
-  utterance.onend = () => {
-
-    if (!isProcessing) {
-
-      core.classList.remove("processing");
-
-    }
-
-  };
-
-  window.speechSynthesis.speak(utterance);
 
 }
 
 
-/* ============================================================
-   SPEECH RECOGNITION
-   ============================================================ */
+/* =========================
+   MICROPHONE
+   ========================= */
 
-function initializeSpeechRecognition() {
+function initializeVoice() {
 
   const SpeechRecognition =
     window.SpeechRecognition ||
@@ -588,18 +418,24 @@ function initializeSpeechRecognition() {
 
   if (!SpeechRecognition) {
 
-    micButton.style.opacity = ".45";
+    micButton.style.opacity = "0.4";
 
-    micButton.title =
-      "Speech recognition is not supported in this browser";
+    micButton.addEventListener("click", () => {
+
+      showToast(
+        "Voice input is not supported"
+      );
+
+    });
 
     return;
 
   }
 
-  recognition = new SpeechRecognition();
+  recognition =
+    new SpeechRecognition();
 
-  recognition.lang = "en-US";
+  recognition.lang = "en-IN";
 
   recognition.continuous = false;
 
@@ -610,15 +446,18 @@ function initializeSpeechRecognition() {
 
   recognition.onstart = () => {
 
-    listening = true;
+    isListening = true;
 
     micButton.classList.add("active");
 
     voiceOverlay.classList.add("active");
 
-    voiceText.textContent = "Listening...";
+    voiceText.textContent =
+      "Listening...";
 
-    core.classList.add("processing");
+    jarvisCore.classList.add(
+      "processing"
+    );
 
   };
 
@@ -626,7 +465,6 @@ function initializeSpeechRecognition() {
   recognition.onresult = event => {
 
     let finalText = "";
-
     let interimText = "";
 
     for (
@@ -635,30 +473,34 @@ function initializeSpeechRecognition() {
       i++
     ) {
 
-      const transcript =
-        event.results[i][0].transcript;
+      const result =
+        event.results[i];
 
-      if (event.results[i].isFinal) {
+      const text =
+        result[0].transcript;
 
-        finalText += transcript;
+      if (result.isFinal) {
+
+        finalText += text;
 
       } else {
 
-        interimText += transcript;
+        interimText += text;
 
       }
 
     }
 
-    const displayed =
+    const current =
       finalText || interimText;
 
     voiceText.textContent =
-      displayed || "Speak your command...";
+      current || "Listening...";
 
     if (finalText) {
 
-      userInput.value = finalText.trim();
+      userInput.value =
+        finalText.trim();
 
     }
 
@@ -667,21 +509,36 @@ function initializeSpeechRecognition() {
 
   recognition.onerror = event => {
 
-    listening = false;
+    console.error(
+      "Speech error:",
+      event.error
+    );
 
-    micButton.classList.remove("active");
+    isListening = false;
 
-    voiceOverlay.classList.remove("active");
+    micButton.classList.remove(
+      "active"
+    );
 
-    core.classList.remove("processing");
+    voiceOverlay.classList.remove(
+      "active"
+    );
+
+    jarvisCore.classList.remove(
+      "processing"
+    );
 
     if (event.error === "not-allowed") {
 
-      showToast("Microphone permission denied");
+      showToast(
+        "Microphone permission denied"
+      );
 
-    } else if (event.error !== "aborted") {
+    } else {
 
-      showToast(`Voice error: ${event.error}`);
+      showToast(
+        "Microphone error"
+      );
 
     }
 
@@ -690,22 +547,28 @@ function initializeSpeechRecognition() {
 
   recognition.onend = () => {
 
-    const hadText =
-      userInput.value.trim().length > 0;
+    isListening = false;
 
-    listening = false;
+    micButton.classList.remove(
+      "active"
+    );
 
-    micButton.classList.remove("active");
-
-    voiceOverlay.classList.remove("active");
+    voiceOverlay.classList.remove(
+      "active"
+    );
 
     if (!isProcessing) {
 
-      core.classList.remove("processing");
+      jarvisCore.classList.remove(
+        "processing"
+      );
 
     }
 
-    if (hadText) {
+    const text =
+      userInput.value.trim();
+
+    if (text) {
 
       setTimeout(() => {
 
@@ -720,154 +583,340 @@ function initializeSpeechRecognition() {
 }
 
 
-/* ============================================================
-   MICROPHONE
-   ============================================================ */
+/* =========================
+   MIC BUTTON
+   ========================= */
 
-micButton.addEventListener("click", () => {
+micButton.addEventListener(
+  "click",
+  () => {
 
-  if (!recognition) {
+    if (!recognition) return;
 
-    showToast("Speech recognition is not supported");
+    if (isListening) {
 
-    return;
+      recognition.stop();
 
-  }
+      return;
 
-  if (listening) {
-
-    recognition.stop();
-
-    return;
-
-  }
-
-  try {
+    }
 
     userInput.value = "";
 
-    recognition.start();
+    try {
 
-  } catch (error) {
+      recognition.start();
 
-    showToast("Microphone is already active");
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+);
+
+
+/* =========================
+   CANCEL VOICE
+   ========================= */
+
+if (stopVoice) {
+
+  stopVoice.addEventListener(
+    "click",
+    () => {
+
+      if (
+        recognition &&
+        isListening
+      ) {
+
+        recognition.stop();
+
+      }
+
+      voiceOverlay.classList.remove(
+        "active"
+      );
+
+      micButton.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================
+   SPEAK BUTTON
+   ========================= */
+
+if (speakButton) {
+
+  speakButton.addEventListener(
+    "click",
+    () => {
+
+      if (!lastAIResponse) {
+
+        showToast(
+          "No response available"
+        );
+
+        return;
+
+      }
+
+      speak(lastAIResponse);
+
+    }
+  );
+
+}
+
+
+/* =========================
+   TEXT TO SPEECH
+   ========================= */
+
+function speak(text) {
+
+  if (!("speechSynthesis" in window)) {
+
+    showToast(
+      "Voice output is not supported"
+    );
+
+    return;
 
   }
 
-});
+  speechSynthesis.cancel();
 
+  const cleanText =
+    text
+      .replace(/[*#_`]/g, "")
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1");
 
-stopVoice.addEventListener("click", () => {
+  const utterance =
+    new SpeechSynthesisUtterance(
+      cleanText
+    );
 
-  if (recognition && listening) {
+  utterance.lang = "en-IN";
 
-    recognition.stop();
+  utterance.rate = 0.92;
 
-  }
+  utterance.pitch = 0.82;
 
-  voiceOverlay.classList.remove("active");
+  utterance.volume = 1;
 
-  micButton.classList.remove("active");
+  const voices =
+    speechSynthesis.getVoices();
 
-});
+  const voice =
+    voices.find(v =>
+      /en-IN/i.test(v.lang)
+    ) ||
+    voices.find(v =>
+      /en-US/i.test(v.lang)
+    );
 
+  if (voice) {
 
-/* ============================================================
-   MOBILE VOICE / KEYBOARD BEHAVIOR
-   ============================================================ */
-
-userInput.addEventListener("focus", () => {
-
-  document.body.classList.add("keyboard-active");
-
-});
-
-
-userInput.addEventListener("blur", () => {
-
-  document.body.classList.remove("keyboard-active");
-
-});
-
-
-/* ============================================================
-   ENTER / SPACE CORE INTERACTION
-   ============================================================ */
-
-document.addEventListener("keydown", event => {
-
-  if (
-    event.key === "/" &&
-    document.activeElement !== userInput
-  ) {
-
-    event.preventDefault();
-
-    userInput.focus();
+    utterance.voice = voice;
 
   }
 
-});
+  utterance.onstart = () => {
 
+    jarvisCore.classList.add(
+      "processing"
+    );
 
-/* ============================================================
-   ONLINE STATUS MONITOR
-   ============================================================ */
+    systemTitle.textContent =
+      "J.A.R.V.I.S. SPEAKING";
 
-window.addEventListener("online", () => {
+  };
 
-  systemSubtitle.textContent =
-    "Network connection restored.";
-
-  setTimeout(() => {
+  utterance.onend = () => {
 
     if (!isProcessing) {
+
+      jarvisCore.classList.remove(
+        "processing"
+      );
+
+      systemTitle.textContent =
+        "SYSTEMS ONLINE";
 
       systemSubtitle.textContent =
         "All J.A.R.V.I.S. systems are operational.";
 
     }
 
-  }, 1800);
+  };
 
-});
+  speechSynthesis.speak(
+    utterance
+  );
 
-
-window.addEventListener("offline", () => {
-
-  systemTitle.textContent = "OFFLINE";
-
-  systemSubtitle.textContent =
-    "Network connection unavailable.";
-
-});
+}
 
 
-/* ============================================================
-   STOP SPEECH WHEN PAGE IS HIDDEN
-   ============================================================ */
+/* =========================
+   UTILITY
+   ========================= */
 
-document.addEventListener("visibilitychange", () => {
+function escapeHTML(text) {
 
-  if (document.hidden && "speechSynthesis" in window) {
+  const div =
+    document.createElement("div");
 
-    window.speechSynthesis.cancel();
+  div.textContent = text;
+
+  return div.innerHTML;
+
+}
+
+
+function scrollMessages() {
+
+  requestAnimationFrame(() => {
+
+    messages.scrollTop =
+      messages.scrollHeight;
+
+  });
+
+}
+
+
+function showToast(text) {
+
+  toast.textContent = text;
+
+  toast.classList.add("show");
+
+  clearTimeout(
+    showToast.timer
+  );
+
+  showToast.timer =
+    setTimeout(() => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    }, 2200);
+
+}
+
+
+function getErrorMessage(error) {
+
+  if (
+    error.message ===
+    "API_KEY_MISSING"
+  ) {
+
+    return "Boss, Gemini API key ఇంకా CONFIG section లో పెట్టలేదు.";
 
   }
 
-});
+  if (
+    error.message ===
+    "EMPTY_RESPONSE"
+  ) {
 
+    return "Boss, AI నుండి response రాలేదు.";
 
-/* ============================================================
-   INITIAL VOICE LIST LOAD
-   ============================================================ */
+  }
 
-if ("speechSynthesis" in window) {
+  if (
+    /429|quota/i.test(
+      error.message
+    )
+  ) {
 
-  window.speechSynthesis.onvoiceschanged = () => {
+    return "Boss, Gemini API quota సమస్య ఉంది.";
 
-    window.speechSynthesis.getVoices();
+  }
 
-  };
+  if (
+    /403|permission|api key/i.test(
+      error.message
+    )
+  ) {
+
+    return "Boss, Gemini API key లేదా API permission check చేయండి.";
+
+  }
+
+  if (
+    /Failed to fetch|NetworkError/i.test(
+      error.message
+    )
+  ) {
+
+    return "Boss, internet connection check చేయండి.";
+
+  }
+
+  return "Boss, AI connection లో సమస్య వచ్చింది.";
 
 }
+
+
+/* =========================
+   VOICE LIST
+   ========================= */
+
+if (
+  "speechSynthesis" in window
+) {
+
+  speechSynthesis.onvoiceschanged =
+    () => {
+
+      speechSynthesis.getVoices();
+
+    };
+
+}
+
+
+/* =========================
+   ONLINE / OFFLINE
+   ========================= */
+
+window.addEventListener(
+  "online",
+  () => {
+
+    systemTitle.textContent =
+      "SYSTEMS ONLINE";
+
+    systemSubtitle.textContent =
+      "Network connection restored.";
+
+  }
+);
+
+
+window.addEventListener(
+  "offline",
+  () => {
+
+    systemTitle.textContent =
+      "OFFLINE";
+
+    systemSubtitle.textContent =
+      "Internet connection unavailable.";
+
+  }
+);
