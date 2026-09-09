@@ -1,60 +1,170 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>J.A.R.V.I.S Brain Test</title>
-  <style>
-    body { background: #000; color: #0ff; font-family: monospace; padding: 20px; }
-    h1 { text-align: center; letter-spacing: 4px; }
-    #status { color: #f00; text-align: center; margin-bottom: 15px; font-weight: bold; }
-    textarea { width: 100%; background: #001a1a; color: #0ff; border: 1px solid #0ff; padding: 10px; box-sizing: border-box; }
-    button { width: 100%; padding: 14px; background: #0ff; color: #000; font-weight: bold; border: none; margin-top: 10px; font-size: 16px; }
-    #reply { border: 1px solid #0ff; padding: 12px; margin-top: 15px; min-height: 100px; white-space: pre-wrap; color: #fff; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#03181d">
+  <title>J.A.R.V.I.S. Mobile Edition</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>J.A.R.V.I.S</h1>
-  <div id="status">BRAIN: NOT CONNECTED</div>
-  <textarea id="prompt" rows="4">Hello J. A. R. V. I. S</textarea>
-  <button onclick="ask()">SEND REQUEST</button>
-  <div id="reply">Waiting for response...</div>
+  <div class="app">
 
-  <script>
-    const API_KEY = "AQ.Ab8RN6LiOjsT3uwoZkq3H9xtXO-LsF326qcAG0X2wdwumj3NRw";
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <span>J</span>
+        </div>
 
-    async function ask() {
-      document.getElementById("reply").innerText = "PROCESSING...";
-      document.getElementById("status").innerText = "CONNECTING...";
-      try {
-        const res = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + API_KEY,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: document.getElementById("prompt").value }] }]
-            })
-          }
-        );
-        const data = await res.json();
-        if (data.candidates && data.candidates[0]) {
-          document.getElementById("reply").innerText = data.candidates[0].content.parts[0].text;
-          document.getElementById("status").innerText = "✓ BRAIN ONLINE";
-          document.getElementById("status").style.color = "#0f0";
-        } else {
-          document.getElementById("reply").innerText = "ERROR: " + JSON.stringify(data);
-          document.getElementById("status").innerText = "BRAIN: NOT CONNECTED";
-          document.getElementById("status").style.color = "#f00";
-        }
-      } catch(e) {
-        document.getElementById("reply").innerText = "ERROR: " + e.message;
-        document.getElementById("status").innerText = "BRAIN: NOT CONNECTED";
-        document.getElementById("status").style.color = "#f00";
-      }
-    }
-  </script>
+        <div class="brand-text">
+          <h1>J.A.R.V.I.S.</h1>
+          <small>MOBILE EDITION</small>
+        </div>
+      </div>
+
+      <div class="online-status">
+        <i></i>
+        ONLINE
+      </div>
+    </header>
+
+    <main>
+
+      <section class="core-section">
+        <div class="jarvis-core" id="jarvisCore">
+          <div class="cross horizontal"></div>
+          <div class="cross vertical"></div>
+
+          <div class="orbit orbit-1"></div>
+          <div class="orbit orbit-2"></div>
+          <div class="orbit orbit-3"></div>
+          <div class="orbit orbit-4"></div>
+
+          <div class="core-glow"></div>
+
+          <button class="core-button" id="coreButton" aria-label="Activate JARVIS">
+            <span>J</span>
+          </button>
+        </div>
+
+        <div class="system-title">
+          <h2 id="systemTitle">SYSTEMS ONLINE</h2>
+          <p id="systemSubtitle">All J.A.R.V.I.S. systems are operational.</p>
+        </div>
+      </section>
+
+      <section class="system-cards">
+
+        <div class="system-card">
+          <div class="system-icon lightning">ϟ</div>
+          <div class="system-info">
+            <strong>CORE SYSTEM</strong>
+            <span>Operational</span>
+          </div>
+          <div class="card-light"></div>
+        </div>
+
+        <div class="system-card">
+          <div class="system-icon brain">🧠</div>
+          <div class="system-info">
+            <strong>AI ENGINE</strong>
+            <span>Ready</span>
+          </div>
+          <div class="card-light"></div>
+        </div>
+
+        <div class="system-card">
+          <div class="system-icon shield">♢</div>
+          <div class="system-info">
+            <strong>SECURITY</strong>
+            <span>Protected</span>
+          </div>
+          <div class="card-light"></div>
+        </div>
+
+      </section>
+
+      <section class="console">
+
+        <div class="console-header">
+          <div>
+            <h3>J.A.R.V.I.S. CONSOLE</h3>
+            <small>COMMAND INTERFACE</small>
+          </div>
+
+          <div class="live">
+            <i></i>
+            LIVE
+          </div>
+        </div>
+
+        <div class="console-line"></div>
+
+        <div class="messages" id="messages">
+          <div class="message jarvis-message">
+            <span class="message-label">J.A.R.V.I.S.</span>
+            <p>Systems online. How may I assist you, Boss?</p>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <div class="input-area">
+
+      <button class="input-action mic" id="micButton" aria-label="Voice input">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/>
+          <path d="M19 11a7 7 0 0 1-14 0"/>
+          <path d="M12 18v4"/>
+          <path d="M8 22h8"/>
+        </svg>
+      </button>
+
+      <input
+        id="userInput"
+        type="text"
+        autocomplete="off"
+        placeholder="Reply"
+        enterkeyhint="send"
+      >
+
+      <button class="input-action send" id="sendButton" aria-label="Send">
+        <svg viewBox="0 0 24 24">
+          <path d="M22 2 11 13"/>
+          <path d="m22 2-7 20-4-9-9-4Z"/>
+        </svg>
+      </button>
+
+      <button class="input-action speak" id="speakButton" aria-label="Voice output">
+        <svg viewBox="0 0 24 24">
+          <path d="M11 5 6 9H2v6h4l5 4Z"/>
+          <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+          <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+        </svg>
+      </button>
+
+    </div>
+
+    <div class="voice-overlay" id="voiceOverlay">
+      <div class="voice-panel">
+        <div class="voice-ring">
+          <div class="voice-pulse"></div>
+          <span>J</span>
+        </div>
+        <strong>LISTENING</strong>
+        <span id="voiceText">Speak your command...</span>
+        <button id="stopVoice">CANCEL</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
-
