@@ -815,80 +815,9 @@ function showToast(text) {
     }, 2200);
 
 }
-
-
 function getErrorMessage(error) {
-
-  if (
-    error.message ===
-    "API_KEY_MISSING"
-  ) {
-
-    return "Boss, Gemini API key ఇంకా CONFIG section లో పెట్టలేదు.";
-
-  }
-
-  if (
-    error.message ===
-    "EMPTY_RESPONSE"
-  ) {
-
-    return "Boss, AI నుండి response రాలేదు.";
-
-  }
-
-  if (
-    /429|quota/i.test(
-      error.message
-    )
-  ) {
-
-    return "Boss, Gemini API quota సమస్య ఉంది.";
-
-  }
-
-  if (
-    /403|permission|api key/i.test(
-      error.message
-    )
-  ) {
-
-    return "Boss, Gemini API key లేదా API permission check చేయండి.";
-
-  }
-
-  if (
-    /Failed to fetch|NetworkError/i.test(
-      error.message
-    )
-  ) {
-
-    return "Boss, internet connection check చేయండి.";
-
-  }
-
-  return "Boss, AI connection లో సమస్య వచ్చింది.";
-
+    return "Boss, AI connection లో సమస్య వచ్చింది.";
 }
-
-
-/* =========================
-   VOICE LIST
-   ========================= */
-
-if (
-  "speechSynthesis" in window
-) {
-
-  speechSynthesis.onvoiceschanged =
-    () => {
-
-      speechSynthesis.getVoices();
-
-    };
-
-}
-
 
 /* =========================
    ONLINE / OFFLINE
