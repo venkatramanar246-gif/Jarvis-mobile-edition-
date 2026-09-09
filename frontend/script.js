@@ -4,7 +4,7 @@
 
 const CONFIG = {
   GEMINI_API_KEY: "AQ.Ab8RN6LGXSDFszMkxd4iGtkW4HcnhogOZ822jUP2a90EAH_MaQ",
-  GEMINI_MODEL: "gemini-3.6-flash",
+  GEMINI_MODEL: "gemini-1.5-flash",
 
   SYSTEM_PROMPT: `
 You are J.A.R.V.I.S., a personal AI assistant.
