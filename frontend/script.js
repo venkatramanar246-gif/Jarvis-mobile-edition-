@@ -2,11 +2,11 @@
 
 /* ============================================================
    J.A.R.V.I.S. CONFIGURATION
-   Paste your Gemini API key ONLY here.
+   
    ============================================================ */
 
 const CONFIG = {
-  GEMINI_API_KEY: "",
+  GEMINI_API_KEY: "AQ.Ab8RN6K7VsbckQKK3IsH-FgZzlqu-Tf9T3IaXjk0n1wY4gPpKg",
 
   GEMINI_MODEL: "gemini-2.5-flash",
 
