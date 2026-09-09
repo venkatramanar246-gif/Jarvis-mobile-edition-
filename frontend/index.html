@@ -1,1 +1,60 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>J.A.R.V.I.S Brain Test</title>
+  <style>
+    body { background: #000; color: #0ff; font-family: monospace; padding: 20px; }
+    h1 { text-align: center; letter-spacing: 4px; }
+    #status { color: #f00; text-align: center; margin-bottom: 15px; font-weight: bold; }
+    textarea { width: 100%; background: #001a1a; color: #0ff; border: 1px solid #0ff; padding: 10px; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; background: #0ff; color: #000; font-weight: bold; border: none; margin-top: 10px; font-size: 16px; }
+    #reply { border: 1px solid #0ff; padding: 12px; margin-top: 15px; min-height: 100px; white-space: pre-wrap; color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>J.A.R.V.I.S</h1>
+  <div id="status">BRAIN: NOT CONNECTED</div>
+  <textarea id="prompt" rows="4">Hello J. A. R. V. I. S</textarea>
+  <button onclick="ask()">SEND REQUEST</button>
+  <div id="reply">Waiting for response...</div>
+
+  <script>
+    const API_KEY = "AQ.Ab8RN6LiOjsT3uwoZkq3H9xtXO-LsF326qcAG0X2wdwumj3NRw";
+
+    async function ask() {
+      document.getElementById("reply").innerText = "PROCESSING...";
+      document.getElementById("status").innerText = "CONNECTING...";
+      try {
+        const res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + API_KEY,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: document.getElementById("prompt").value }] }]
+            })
+          }
+        );
+        const data = await res.json();
+        if (data.candidates && data.candidates[0]) {
+          document.getElementById("reply").innerText = data.candidates[0].content.parts[0].text;
+          document.getElementById("status").innerText = "✓ BRAIN ONLINE";
+          document.getElementById("status").style.color = "#0f0";
+        } else {
+          document.getElementById("reply").innerText = "ERROR: " + JSON.stringify(data);
+          document.getElementById("status").innerText = "BRAIN: NOT CONNECTED";
+          document.getElementById("status").style.color = "#f00";
+        }
+      } catch(e) {
+        document.getElementById("reply").innerText = "ERROR: " + e.message;
+        document.getElementById("status").innerText = "BRAIN: NOT CONNECTED";
+        document.getElementById("status").style.color = "#f00";
+      }
+    }
+  </script>
+</body>
+</html>
+
